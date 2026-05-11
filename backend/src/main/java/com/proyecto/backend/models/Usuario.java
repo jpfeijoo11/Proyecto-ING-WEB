@@ -22,9 +22,7 @@ public class Usuario {
 
     private String rol = "ADMIN";
 
-    // --- VALIDACIÓN DE DATO SENSIBLE (Punto 1 de la rúbrica) ---
-    // Nos aseguramos de que la cédula sea validada por el backend antes de tocar la BD.
-    // Solo aceptará exactamente 10 dígitos numéricos.
+
     @NotBlank(message = "La cédula es un dato sensible obligatorio")
     @Pattern(regexp = "^[0-9]{10}$", message = "La cédula debe contener exactamente 10 números")
     @Column(unique = true, nullable = false, length = 10)
@@ -33,7 +31,7 @@ public class Usuario {
     @Column(name = "nombre_completo")
     private String nombreCompleto;
 
-    // --- GETTERS Y SETTERS ---
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
