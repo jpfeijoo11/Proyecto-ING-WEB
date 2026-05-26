@@ -1,0 +1,17 @@
+<nav class="navbar-global">
+  <div class="nav-marca">
+    <span class="logo">CustomGate 360</span>
+  </div>
+
+  <div class="nav-enlaces">
+    <a routerLink="/dashboard" class="nav-link">Inicio</a>
+  </div>
+
+  <div class="nav-perfil">
+    <div class="info-usuario">
+      <span class="nombre">{{ nombreUsuario }}</span>
+      <span class="rol badge">{{ rolUsuario }}</span>
+    </div>
+    <button class="btn-salir" (click)="cerrarSesion()">Cerrar Sesión</button>
+  </div>
+</nav>

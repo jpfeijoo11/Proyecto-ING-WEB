@@ -1,0 +1,326 @@
+<section class="contenedor-operaciones">
+  <header class="cabecera-modulo">
+    <h1>Gestión de Operaciones Aduaneras</h1>
+    <p>Administre y registre los tránsitos internacionales de mercancía.</p>
+  </header>
+
+  <!-- ── PANEL DE ANÁLISIS DE RIESGO ────────────────────────────────────────
+       Aparece al registrar una nueva operación O al hacer click en "Ver Análisis"
+       en cualquier registro existente. Visible para todos los roles.
+  ──────────────────────────────────────────────────────────────────────────── -->
+  <div id="panel-analisis"
+       class="panel-analisis"
+       *ngIf="ultimoDetalle && ultimaOperacion"
+       [ngClass]="'analisis-' + (ultimoDetalle.canalAforo?.toLowerCase() || 'verde')">
+
+    <div class="analisis-header">
+      <span class="analisis-emoji">{{ getEmojiCanal(ultimoDetalle.canalAforo) }}</span>
+      <div class="analisis-titulo">
+        <h2>Análisis de Riesgo — {{ ultimaOperacion.numeroTracking }}</h2>
+        <p>{{ ultimoDetalle.descripcionCanal }}</p>
+      </div>
+      <div class="analisis-score">
+        <span class="score-numero">{{ ultimoDetalle.puntajeTotal }}</span>
+        <span class="score-label">/ 100 pts</span>
+      </div>
+      <button class="btn-cerrar" (click)="cerrarAnalisis()">✕</button>
+    </div>
+
+    <!-- Desglose de los 3 vectores (resultado real de cada JOIN en BD) -->
+    <div class="vectores-grid">
+
+      <!-- Vector 1: LEFT JOIN catalogo_riesgo_pais -->
+      <div class="vector-card" [ngClass]="ultimoDetalle.puntosOrigen > 0 ? 'vector-alerta' : 'vector-ok'">
+        <div class="vector-header">
+          <span class="vector-icono">📍</span>
+          <span class="vector-titulo">Vector 1 — Puerto Origen</span>
+          <span class="vector-pts" [ngClass]="ultimoDetalle.puntosOrigen > 0 ? 'pts-riesgo' : 'pts-ok'">
+            +{{ ultimoDetalle.puntosOrigen }} pts
+          </span>
+        </div>
+        <div class="vector-body">
+          <div class="dato-fila">
+            <span class="dato-label">Puerto:</span>
+            <span class="dato-valor">{{ ultimaOperacion.puertoOrigen }}</span>
+          </div>
+          <div class="dato-fila">
+            <span class="dato-label">En catálogo:</span>
+            <span class="dato-valor" [ngClass]="ultimoDetalle.origenEnCatalogo ? 'valor-alerta' : 'valor-ok'">
+              {{ ultimoDetalle.origenEnCatalogo ? '✅ Sí' : '❌ No catalogado' }}
+            </span>
+          </div>
+          <div class="dato-fila" *ngIf="ultimoDetalle.origenEnCatalogo">
+            <span class="dato-label">Nivel riesgo:</span>
+            <span class="dato-valor nivel-{{ ultimoDetalle.nivelRiesgoPais?.toLowerCase() }}">
+              {{ ultimoDetalle.nivelRiesgoPais }}
+            </span>
+          </div>
+          <div class="dato-fila" *ngIf="ultimoDetalle.origenEnCatalogo">
+            <span class="dato-label">Motivo:</span>
+            <span class="dato-valor motivo-text">{{ ultimoDetalle.motivoPais }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vector 2: LEFT JOIN importador_historial -->
+      <div class="vector-card" [ngClass]="ultimoDetalle.importadorInfractor ? 'vector-alerta' : 'vector-ok'">
+        <div class="vector-header">
+          <span class="vector-icono">🏢</span>
+          <span class="vector-titulo">Vector 2 — Importador</span>
+          <span class="vector-pts" [ngClass]="ultimoDetalle.puntosImportador > 0 ? 'pts-riesgo' : 'pts-ok'">
+            +{{ ultimoDetalle.puntosImportador }} pts
+          </span>
+        </div>
+        <div class="vector-body">
+          <div class="dato-fila">
+            <span class="dato-label">Empresa:</span>
+            <span class="dato-valor">{{ ultimoDetalle.nombreImportador }}</span>
+          </div>
+          <div class="dato-fila">
+            <span class="dato-label">Infracciones:</span>
+            <span class="dato-valor" [ngClass]="ultimoDetalle.infraccionesImportador > 2 ? 'valor-alerta' : 'valor-ok'">
+              {{ ultimoDetalle.infraccionesImportador }}
+              {{ ultimoDetalle.infraccionesImportador > 2 ? ' ⚠️ supera umbral de 2' : ' ✅ dentro del límite' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vector 3: LEFT JOIN restricciones_arancelarias -->
+      <div class="vector-card" [ngClass]="ultimoDetalle.requierePermiso ? 'vector-alerta' : 'vector-ok'">
+        <div class="vector-header">
+          <span class="vector-icono">📦</span>
+          <span class="vector-titulo">Vector 3 — Mercancía</span>
+          <span class="vector-pts" [ngClass]="ultimoDetalle.puntosMercancia > 0 ? 'pts-riesgo' : 'pts-ok'">
+            +{{ ultimoDetalle.puntosMercancia }} pts
+          </span>
+        </div>
+        <div class="vector-body">
+          <div class="dato-fila">
+            <span class="dato-label">Descripción:</span>
+            <span class="dato-valor">{{ ultimoDetalle.descripcionMercancia }}</span>
+          </div>
+          <div class="dato-fila">
+            <span class="dato-label">Categoría:</span>
+            <span class="dato-valor">{{ ultimoDetalle.categoriaMercancia }}</span>
+          </div>
+          <div class="dato-fila">
+            <span class="dato-label">Permiso especial:</span>
+            <span class="dato-valor" [ngClass]="ultimoDetalle.requierePermiso ? 'valor-alerta' : 'valor-ok'">
+              {{ ultimoDetalle.requierePermiso ? '🔒 Sí — Mercancía restringida' : '✅ No requerido' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /vectores-grid -->
+
+    <!-- Instrucción de acción según canal -->
+    <div class="analisis-instruccion" *ngIf="ultimoDetalle.canalAforo === 'ROJO'">
+      🚨 <strong>Acción (Inspector):</strong> Abrir contenedor físicamente y llenar reporte de hallazgos antes de liberar.
+    </div>
+    <div class="analisis-instruccion amarillo" *ngIf="ultimoDetalle.canalAforo === 'AMARILLO'">
+      📋 <strong>Acción (Agente):</strong> Subir Factura Comercial, Certificado de Origen y Póliza de Seguro.
+    </div>
+    <div class="analisis-instruccion verde" *ngIf="ultimoDetalle.canalAforo === 'VERDE'">
+      ✅ <strong>Desaduanización Automática:</strong> Carga aprobada sin inspección adicional requerida.
+    </div>
+  </div>
+
+  <!-- Indicador de carga -->
+  <div class="cargando-analisis" *ngIf="cargandoAnalisis">
+    <span class="spinner">⏳</span> Ejecutando análisis de riesgo...
+  </div>
+
+  <!-- ── LAYOUT PRINCIPAL ─────────────────────────────────────────────────── -->
+  <div class="layout-principal" [class.layout-full]="!isAdmin">
+
+    <!-- ── FORMULARIO (solo Admin) ───────────────────────────────────────── -->
+    <aside class="panel-formulario" *ngIf="isAdmin">
+      <article class="tarjeta-formulario">
+        <h2>Nueva Operación</h2>
+        <p class="subtitulo-form">Se ejecutará un JOIN de 3 tablas para evaluar el canal de aforo.</p>
+
+        <form [formGroup]="operacionForm" (ngSubmit)="onSubmit()" class="formulario-aduanero">
+
+          <div class="grupo-control">
+            <label for="numeroTracking">Número de Tracking</label>
+            <input type="text" id="numeroTracking" formControlName="numeroTracking"
+              placeholder="Ej. TRACK-EC-001"
+              [class.input-error]="isFieldInvalid('numeroTracking')">
+            <span class="mensaje-error" *ngIf="isFieldInvalid('numeroTracking')">
+              Requerido. Solo letras mayúsculas, números y guiones.
+            </span>
+          </div>
+
+          <div class="grupo-control">
+            <label for="tipoOperacion">Tipo de Operación</label>
+            <select id="tipoOperacion" formControlName="tipoOperacion"
+              [class.input-error]="isFieldInvalid('tipoOperacion')">
+              <option value="" disabled selected>Seleccione...</option>
+              <option value="IMPORTACION">Importación</option>
+              <option value="EXPORTACION">Exportación</option>
+            </select>
+          </div>
+
+          <!-- Puerto Origen: SELECT preestablecido por país (Ecuador / España / USA) -->
+          <div class="grupo-control">
+            <label for="puertoOrigen">Puerto de Origen</label>
+            <select id="puertoOrigen" formControlName="puertoOrigen"
+              [class.input-error]="isFieldInvalid('puertoOrigen')">
+              <option value="" disabled selected>— Seleccione un puerto —</option>
+
+              <optgroup label="🇪🇨 Ecuador">
+                <option *ngFor="let p of puertosDisponibles | slice:0:4" [value]="p.nombrePuertoOPais">
+                  {{ getPuertoLabel(p) }}
+                </option>
+              </optgroup>
+
+              <optgroup label="🇪🇸 España">
+                <option *ngFor="let p of puertosDisponibles | slice:4:8" [value]="p.nombrePuertoOPais">
+                  {{ getPuertoLabel(p) }}
+                </option>
+              </optgroup>
+
+              <optgroup label="🇺🇸 USA">
+                <option *ngFor="let p of puertosDisponibles | slice:8" [value]="p.nombrePuertoOPais">
+                  {{ getPuertoLabel(p) }}
+                </option>
+              </optgroup>
+            </select>
+            <span class="hint">🔴 Alto riesgo (+30 pts) · 🟡 Medio riesgo (+15 pts) · 🟢 Bajo riesgo (0 pts)</span>
+          </div>
+
+          <div class="grupo-control">
+            <label for="puertoDestino">Puerto de Destino</label>
+            <input type="text" id="puertoDestino" formControlName="puertoDestino"
+              placeholder="Ej. Guayaquil"
+              [class.input-error]="isFieldInvalid('puertoDestino')">
+          </div>
+
+          <div class="separador-riesgo">
+            <span>🔍 Parámetros del Análisis de Riesgo</span>
+          </div>
+
+          <div class="grupo-control">
+            <label for="idImportador">Importador (cruza con importador_historial)</label>
+            <select id="idImportador" formControlName="idImportador">
+              <option [value]="null">— Sin importador —</option>
+              <option *ngFor="let imp of importadores" [value]="imp.id">
+                {{ imp.nombreEmpresa }}{{ imp.infraccionesPrevias > 2 ? ' ⚠️ (' + imp.infraccionesPrevias + ' infracc.)' : '' }}
+              </option>
+            </select>
+            <span class="hint">Más de 2 infracciones → +40 pts de riesgo</span>
+          </div>
+
+          <div class="grupo-control">
+            <label for="codigoArancelario">Código Arancelario (cruza con restricciones_arancelarias)</label>
+            <select id="codigoArancelario" formControlName="codigoArancelario">
+              <option value="">— Mercancía general —</option>
+              <option *ngFor="let ar of arancelarios" [value]="ar.codigoArancelario">
+                {{ ar.codigoArancelario }} — {{ ar.descripcion }}{{ ar.requierePermiso ? ' 🔒' : '' }}
+              </option>
+            </select>
+            <span class="hint">Productos 🔒 requieren permiso → +30 pts de riesgo</span>
+          </div>
+
+          <button type="submit" class="btn-primario" [disabled]="isSubmitting || operacionForm.invalid">
+            {{ isSubmitting ? 'Ejecutando análisis...' : '🚀 Registrar y Analizar' }}
+          </button>
+        </form>
+      </article>
+    </aside>
+
+    <!-- ── TABLA DE OPERACIONES ──────────────────────────────────────────── -->
+    <main class="panel-datos">
+      <article class="tarjeta-datos">
+        <h2>Historial de Trámites</h2>
+
+        <div class="contenedor-tabla">
+          <table class="tabla-aduanera">
+            <thead>
+              <tr>
+                <th scope="col">Tracking</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Ruta</th>
+                <th scope="col">Canal Aforo</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Fecha</th>
+                <th scope="col" class="texto-centro">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let op of operaciones"
+                  [ngClass]="{'fila-roja': op.canalAforo === 'ROJO',
+                               'fila-amarilla': op.canalAforo === 'AMARILLO',
+                               'fila-seleccionada': op.id === operacionSeleccionadaId}">
+
+                <td data-label="Tracking"><strong>{{ op.numeroTracking }}</strong></td>
+
+                <td data-label="Tipo">
+                  <span class="badge" [ngClass]="op.tipoOperacion.toLowerCase()">{{ op.tipoOperacion }}</span>
+                </td>
+
+                <td data-label="Ruta">
+                  {{ op.puertoOrigen }} <span class="flecha">&rarr;</span> {{ op.puertoDestino }}
+                </td>
+
+                <td data-label="Canal">
+                  <div class="canal-wrapper" *ngIf="op.canalAforo; else sinCanal">
+                    <span class="canal-badge" [ngClass]="'canal-' + op.canalAforo!.toLowerCase()">
+                      {{ getEmojiCanal(op.canalAforo) }} {{ getLabelCanal(op.canalAforo) }}
+                    </span>
+                    <small class="puntaje">{{ op.puntajeRiesgo }} pts</small>
+                  </div>
+                  <ng-template #sinCanal><span class="badge estado">—</span></ng-template>
+                </td>
+
+                <td data-label="Estado">
+                  <span class="badge estado">{{ op.estado.replace('_', ' ') }}</span>
+                </td>
+
+                <td data-label="Fecha">{{ op.fechaRegistro | date:'mediumDate' }}</td>
+
+                <td data-label="Acciones" class="celda-acciones texto-centro">
+
+                  <!-- 🔍 Ver Análisis: visible para TODOS los roles -->
+                  <button class="btn-analisis"
+                    (click)="verAnalisis(op)"
+                    [ngClass]="{'btn-analisis-activo': op.id === operacionSeleccionadaId}"
+                    title="Ver análisis de riesgo detallado">
+                    {{ op.id === operacionSeleccionadaId ? '▲ Cerrar' : '🔍 Ver Análisis' }}
+                  </button>
+
+                  <!-- Acciones por rol -->
+                  <button class="btn-secundario" *ngIf="isAdmin" (click)="avanzarFlujo(op)">
+                    Modificar Flujo
+                  </button>
+                  <button class="btn-accion" *ngIf="isInspector" (click)="avanzarFlujo(op)"
+                    [ngClass]="{'btn-alerta': op.canalAforo === 'ROJO'}">
+                    {{ op.canalAforo === 'ROJO' ? '🚨 Inspección' : 'Avanzar' }}
+                  </button>
+                  <button class="btn-adjunto" *ngIf="isAgente" (click)="subirDocumento(op)"
+                    [ngClass]="{'btn-urgente': op.canalAforo === 'AMARILLO'}">
+                    {{ op.canalAforo === 'AMARILLO' ? '📋 Docs' : 'Subir Doc' }}
+                  </button>
+
+                  <!-- 🗑 Eliminar operación: solo Admin -->
+                  <button class="btn-eliminar" *ngIf="isAdmin"
+                    (click)="eliminarOperacion(op)"
+                    title="Eliminar esta operación permanentemente">
+                    🗑
+                  </button>
+
+                </td>
+              </tr>
+              <tr *ngIf="operaciones.length === 0" class="fila-vacia">
+                <td colspan="7">No hay operaciones registradas en el sistema.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </main>
+
+  </div>
+</section>

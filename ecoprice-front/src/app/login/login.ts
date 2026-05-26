@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,7 +11,7 @@ import { AduanaService } from '../services/aduana.service';
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
 
   credenciales = {
     username: '',
@@ -25,29 +25,26 @@ export class LoginComponent {
     private router: Router
   ) {}
 
+  // Ciclo de vida: Limpia credenciales si el usuario regresa al login
+  ngOnInit(): void {
+    localStorage.removeItem('usuarioActual');
+  }
+
   iniciarSesion(): void {
     this.mensajeError = '';
 
     this.aduanaService.login(this.credenciales).subscribe({
       next: (res) => {
-        // Guardamos el objeto completo del usuario para tener su rol disponible en toda la app
+        // Almacenamos el objeto de sesión serializado
         localStorage.setItem('usuarioActual', JSON.stringify(res));
 
         alert('¡Bienvenido ' + res.nombreCompleto + '!');
 
-        // LÓGICA DE REDIRECCIÓN SEGÚN ROL (Punto 2 de la Rúbrica)
-        if (res.rol === 'ADMIN') {
-          // El Administrador es el único que puede alimentar el sistema con nuevos usuarios
-          this.router.navigate(['/registro']);
-        } else {
-          // Agentes e Inspectores no tienen acceso a la administración de usuarios
-          alert('Tu rol de ' + res.rol + ' no tiene permisos para gestionar usuarios.');
-          // Por ahora los devolvemos al login o puedes mandarlos a un dashboard futuro
-          this.router.navigate(['/login']);
-        }
+        // Flujo unificado: Todos los roles ingresan a la pantalla de bienvenida (Hub Central)
+        this.router.navigate(['/dashboard']);
       },
       error: (err) => {
-        // Manejo de error 401 (Unauthorized) desde Spring Boot
+        // Captura de error de credenciales desde Spring Boot
         this.mensajeError = 'Usuario o contraseña incorrectos. Verifica tus credenciales.';
       }
     });

@@ -1,0 +1,18 @@
+.navbar-global {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0d47a1;
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.logo { font-size: 1.5rem; font-weight: bold; }
+.nav-link { color: white; text-decoration: none; font-weight: 500; }
+.nav-link:hover { text-decoration: underline; }
+.nav-perfil { display: flex; align-items: center; gap: 1.5rem; }
+.info-usuario { display: flex; flex-direction: column; text-align: right; }
+.nombre { font-weight: bold; font-size: 0.95rem; }
+.rol { font-size: 0.75rem; background-color: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; margin-top: 2px; display: inline-block;}
+.btn-salir { background-color: #d32f2f; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+.btn-salir:hover { background-color: #b71c1c; }

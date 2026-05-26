@@ -1,0 +1,182 @@
+<app-navbar></app-navbar>
+
+<main class="contenedor-dashboard">
+  <header class="bienvenida">
+    <h1>Bienvenido al Panel de Control, {{ nombre }}</h1>
+    <p>Monitoreo en tiempo real del sistema aduanero.</p>
+  </header>
+
+  <!-- ── PANEL DE ALERTAS CANAL ROJO (Inspector / Admin) ─────────────────── -->
+  <section class="panel-alertas" *ngIf="(isInspector || isAdmin) && alertasRojas.length > 0">
+    <div class="alerta-header">
+      <span class="alerta-icono">🚨</span>
+      <div>
+        <h2>Alertas de Aforo Físico — Canal Rojo</h2>
+        <p>{{ alertasRojas.length }} contenedor(es) requieren inspección física inmediata.</p>
+      </div>
+    </div>
+
+    <div class="lista-alertas">
+      <div class="item-alerta" *ngFor="let op of alertasRojas">
+        <div class="alerta-info">
+          <strong>{{ op.numeroTracking }}</strong>
+          <span class="alerta-ruta">{{ op.puertoOrigen }} → {{ op.puertoDestino }}</span>
+          <span class="alerta-puntaje">Riesgo: {{ op.puntajeRiesgo }} pts</span>
+        </div>
+        <div class="alerta-estado">
+          <span class="badge-estado">{{ op.estado.replace('_', ' ') }}</span>
+          <a routerLink="/operaciones" class="btn-ir-operacion">Ir a Operaciones →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ESTADÍSTICAS GLOBALES (todos los roles) ──────────────────────────── -->
+  <section class="seccion-estadisticas">
+    <h2 class="seccion-titulo">📊 Estadísticas del Sistema</h2>
+
+    <!-- Cargando -->
+    <div class="stat-cargando" *ngIf="cargandoEstadisticas">
+      <span>⏳ Calculando estadísticas...</span>
+    </div>
+
+    <div *ngIf="estadisticas && !cargandoEstadisticas">
+
+      <!-- ── Fila 1: Totales por canal ──────────────────────────────────────── -->
+      <div class="stat-grid stat-grid-4">
+
+        <div class="stat-card stat-total">
+          <div class="stat-icono">📦</div>
+          <div class="stat-valor">{{ estadisticas.totalOperaciones }}</div>
+          <div class="stat-label">Total Operaciones</div>
+        </div>
+
+        <div class="stat-card stat-verde">
+          <div class="stat-icono">🟢</div>
+          <div class="stat-valor">{{ estadisticas.operacionesVerdes }}</div>
+          <div class="stat-label">Canal Verde</div>
+          <div class="stat-pct">{{ getPct(estadisticas.operacionesVerdes, estadisticas.totalOperaciones) }}%</div>
+        </div>
+
+        <div class="stat-card stat-amarillo">
+          <div class="stat-icono">🟡</div>
+          <div class="stat-valor">{{ estadisticas.operacionesAmarillos }}</div>
+          <div class="stat-label">Canal Amarillo</div>
+          <div class="stat-pct">{{ getPct(estadisticas.operacionesAmarillos, estadisticas.totalOperaciones) }}%</div>
+        </div>
+
+        <div class="stat-card stat-rojo">
+          <div class="stat-icono">🔴</div>
+          <div class="stat-valor">{{ estadisticas.operacionesRojas }}</div>
+          <div class="stat-label">Canal Rojo</div>
+          <div class="stat-pct">{{ getPct(estadisticas.operacionesRojas, estadisticas.totalOperaciones) }}%</div>
+        </div>
+
+      </div>
+
+      <!-- ── Fila 2: Los 3 rankings ─────────────────────────────────────────── -->
+      <div class="stat-grid stat-grid-3">
+
+        <!-- Producto más solicitado -->
+        <div class="ranking-card">
+          <div class="ranking-header">
+            <span class="ranking-icono">📦</span>
+            <div>
+              <div class="ranking-titulo">Producto Más Solicitado</div>
+              <div class="ranking-subtitulo">Por número de operaciones registradas</div>
+            </div>
+          </div>
+          <div class="ranking-body" *ngIf="estadisticas.productoCodigo; else sinDatos">
+            <div class="ranking-nombre">{{ estadisticas.productoDescripcion }}</div>
+            <div class="ranking-detalle">
+              <span class="ranking-badge badge-producto">{{ estadisticas.productoCodigo }}</span>
+              <span class="ranking-categoria">{{ estadisticas.productoCategoria }}</span>
+            </div>
+            <div class="ranking-conteo">
+              <span class="conteo-numero">{{ estadisticas.productoTotalOperaciones }}</span>
+              <span class="conteo-label">operaciones</span>
+            </div>
+          </div>
+          <ng-template #sinDatos>
+            <div class="ranking-vacio">Sin operaciones registradas aún.</div>
+          </ng-template>
+        </div>
+
+        <!-- Puerto con más operaciones de riesgo -->
+        <div class="ranking-card">
+          <div class="ranking-header">
+            <span class="ranking-icono">⚓</span>
+            <div>
+              <div class="ranking-titulo">Puerto con Más Infracciones</div>
+              <div class="ranking-subtitulo">Por operaciones en canal Amarillo/Rojo</div>
+            </div>
+          </div>
+          <div class="ranking-body" *ngIf="estadisticas.puertoNombre; else sinDatosPuerto">
+            <div class="ranking-nombre">{{ estadisticas.puertoNombre }}</div>
+            <div class="ranking-detalle">
+              <span class="ranking-badge"
+                [ngClass]="estadisticas.puertoNivelRiesgo === 'ALTO' ? 'badge-rojo' :
+                           estadisticas.puertoNivelRiesgo === 'MEDIO' ? 'badge-amarillo' : 'badge-verde'">
+                {{ estadisticas.puertoNivelRiesgo === 'ALTO' ? '🔴 Alto riesgo' :
+                   estadisticas.puertoNivelRiesgo === 'MEDIO' ? '🟡 Medio riesgo' : '🟢 Bajo riesgo' }}
+              </span>
+            </div>
+            <div class="ranking-conteo">
+              <span class="conteo-numero">{{ estadisticas.puertoOperacionesRiesgo }}</span>
+              <span class="conteo-label">ops. de riesgo</span>
+              <span class="conteo-total">/ {{ estadisticas.puertoTotalOperaciones }} total</span>
+            </div>
+          </div>
+          <ng-template #sinDatosPuerto>
+            <div class="ranking-vacio">Sin operaciones registradas aún.</div>
+          </ng-template>
+        </div>
+
+        <!-- Empresa con más infracciones -->
+        <div class="ranking-card">
+          <div class="ranking-header">
+            <span class="ranking-icono">🏢</span>
+            <div>
+              <div class="ranking-titulo">Empresa Más Infractora</div>
+              <div class="ranking-subtitulo">Mayor historial de infracciones previas</div>
+            </div>
+          </div>
+          <div class="ranking-body" *ngIf="estadisticas.empresaNombre; else sinDatosEmpresa">
+            <div class="ranking-nombre">{{ estadisticas.empresaNombre }}</div>
+            <div class="ranking-detalle">
+              <span class="ranking-badge badge-pais">{{ estadisticas.empresaPaisOrigen }}</span>
+            </div>
+            <div class="ranking-conteo">
+              <span class="conteo-numero" [ngClass]="estadisticas.empresaInfracciones > 2 ? 'conteo-alerta' : ''">
+                {{ estadisticas.empresaInfracciones }}
+              </span>
+              <span class="conteo-label">infracciones</span>
+              <span class="conteo-alerta-label" *ngIf="estadisticas.empresaInfracciones > 2">⚠️ supera umbral</span>
+            </div>
+          </div>
+          <ng-template #sinDatosEmpresa>
+            <div class="ranking-vacio">Sin importadores registrados aún.</div>
+          </ng-template>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MÓDULOS ────────────────────────────────────────────────────────── -->
+  <div class="grid-modulos">
+
+    <a routerLink="/operaciones" class="tarjeta-modulo aduanas">
+      <div class="icono">🚢</div>
+      <h2>Seguimiento Logístico</h2>
+      <p>Gestione el flujo de operaciones, asigne estados y revise documentación.</p>
+    </a>
+
+    <a routerLink="/registro" class="tarjeta-modulo usuarios" *ngIf="isAdmin">
+      <div class="icono">👥</div>
+      <h2>Gestión de Personal</h2>
+      <p>Administre cuentas de Agentes e Inspectores del sistema.</p>
+    </a>
+
+  </div>
+</main>

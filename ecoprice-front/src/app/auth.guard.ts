@@ -1,16 +1,26 @@
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 
-export const authGuard = () => {
+export const authGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
-  const user = localStorage.getItem('user');
+  const usuarioJSON = localStorage.getItem('usuarioActual');
 
-  if (user) {
-    
-    return true;
-  } else {
-    
-    router.navigate(['/']);
+  // 1. Si no hay sesión, al login
+  if (!usuarioJSON) {
+    router.navigate(['/login']);
     return false;
   }
+
+  // Parseamos el string para convertirlo de nuevo en un objeto de TypeScript
+  const usuario = JSON.parse(usuarioJSON);
+  const rolUsuario = usuario.rol?.toUpperCase();
+
+  // 2. Protección estricta: Solo el Admin puede entrar a la ruta de registro/usuarios
+  if (state.url.includes('/registro') && (rolUsuario !== 'ADMIN' && rolUsuario !== 'ADMINISTRADOR')) {
+    // Si un Agente o Inspector intenta burlar la URL, lo mandamos a sus operaciones
+    router.navigate(['/operaciones']);
+    return false;
+  }
+
+  return true;
 };

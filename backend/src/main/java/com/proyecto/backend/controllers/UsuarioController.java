@@ -61,4 +61,17 @@ public class UsuarioController {
     public List<Usuario> listarUsuarios() {
         return usuarioRepository.findAll();
     }
+
+    /**
+     * DELETE /api/admin/{id}
+     * Elimina un usuario por ID.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> eliminarUsuario(@PathVariable Long id) {
+        if (!usuarioRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado.");
+        }
+        usuarioRepository.deleteById(id);
+        return ResponseEntity.ok("Usuario eliminado correctamente.");
+    }
 }

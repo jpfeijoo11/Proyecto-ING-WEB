@@ -1,0 +1,641 @@
+/* Variables base para mantener consistencia */
+:host {
+  --color-primario: #0d47a1;
+  --color-primario-hover: #1565c0;
+  --color-texto: #333333;
+  --color-texto-suave: #666666;
+  --color-borde: #e0e0e0;
+  --color-fondo: #f5f7fa;
+  --color-blanco: #ffffff;
+  --color-error: #d32f2f;
+  --radio-borde: 8px;
+  --sombra: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.contenedor-operaciones {
+  padding: 2rem;
+  background-color: var(--color-fondo);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--color-texto);
+}
+
+.cabecera-modulo {
+  margin-bottom: 2rem;
+}
+
+.cabecera-modulo h1 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-primario);
+  font-size: 2rem;
+}
+
+.cabecera-modulo p {
+  margin: 0;
+  color: var(--color-texto-suave);
+}
+
+/* Layout con CSS Grid */
+.layout-principal {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Tarjetas */
+.tarjeta-formulario, .tarjeta-datos {
+  background-color: var(--color-blanco);
+  border-radius: var(--radio-borde);
+  padding: 1.5rem;
+  box-shadow: var(--sombra);
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  border-bottom: 2px solid var(--color-borde);
+  padding-bottom: 0.5rem;
+}
+
+/* Formulario */
+.formulario-aduanero {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.fila-controles {
+  display: flex;
+  gap: 1rem;
+}
+
+.fila-controles .grupo-control {
+  flex: 1;
+}
+
+.grupo-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input, select {
+  padding: 0.75rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
+.input-error {
+  border-color: var(--color-error);
+}
+
+.mensaje-error {
+  color: var(--color-error);
+  font-size: 0.8rem;
+}
+
+/* Botón */
+.btn-primario {
+  background-color: var(--color-primario);
+  color: var(--color-blanco);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+}
+
+.btn-primario:hover:not(:disabled) {
+  background-color: var(--color-primario-hover);
+}
+
+.btn-primario:disabled {
+  background-color: var(--color-borde);
+  color: var(--color-texto-suave);
+  cursor: not-allowed;
+}
+
+/* Tabla de Datos */
+.contenedor-tabla {
+  overflow-x: auto;
+}
+
+.tabla-aduanera {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tabla-aduanera th {
+  background-color: var(--color-fondo);
+  padding: 1rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-borde);
+}
+
+.tabla-aduanera td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-borde);
+  vertical-align: middle;
+}
+
+/* Badges */
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge.importacion {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.badge.exportacion {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge.estado {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.flecha {
+  color: var(--color-texto-suave);
+  margin: 0 0.5rem;
+}
+
+.fila-vacia td {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-texto-suave);
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .layout-principal {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.layout-principal.layout-full {
+  grid-template-columns: 1fr;
+}
+
+.celda-acciones {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.texto-centro {
+  text-align: center;
+}
+
+/* ── PANEL DE ANÁLISIS DE RIESGO (resultado del JOIN en BD) ───────────────── */
+
+.panel-analisis {
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.analisis-verde    { background: #f1f8f1; border: 2px solid #66bb6a; }
+.analisis-amarillo { background: #fffdf0; border: 2px solid #ffca28; }
+.analisis-rojo     { background: #fff5f5; border: 2px solid #ef5350; }
+
+.analisis-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.analisis-emoji { font-size: 2.5rem; }
+
+.analisis-titulo { flex: 1; min-width: 200px; }
+.analisis-titulo h2 { margin: 0; font-size: 1.1rem; border: none; padding: 0; }
+.analisis-titulo p  { margin: 0.25rem 0 0; font-size: 0.88rem; color: #555; }
+
+.analisis-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255,255,255,0.6);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+}
+.score-numero { font-size: 2rem; font-weight: 800; line-height: 1; }
+.score-label  { font-size: 0.75rem; color: #666; }
+
+/* Grid de los 3 vectores */
+.vectores-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+  .vectores-grid { grid-template-columns: 1fr; }
+}
+
+.vector-card {
+  background: white;
+  border-radius: 8px;
+  padding: 0.9rem;
+  border-left: 4px solid #ccc;
+}
+
+.vector-ok    { border-left-color: #66bb6a; }
+.vector-alerta { border-left-color: #ef5350; }
+
+.vector-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.vector-icono  { font-size: 1.1rem; }
+.vector-titulo { flex: 1; }
+.vector-pts    { font-size: 0.9rem; font-weight: 800; border-radius: 4px; padding: 0.1rem 0.4rem; }
+.pts-riesgo    { background: #ffebee; color: #c62828; }
+.pts-ok        { background: #e8f5e9; color: #1b5e20; }
+
+.vector-body { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.dato-fila {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.dato-label { color: #666; min-width: 120px; flex-shrink: 0; }
+.dato-valor { color: #222; font-weight: 500; }
+
+.valor-alerta { color: #c62828; }
+.valor-ok     { color: #2e7d32; }
+
+.nivel-alto   { color: #c62828; font-weight: 700; }
+.nivel-medio  { color: #e65100; font-weight: 700; }
+.nivel-bajo   { color: #2e7d32; font-weight: 700; }
+
+/* Instrucción final */
+.analisis-instruccion {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: rgba(239,83,80,0.1);
+  color: #b71c1c;
+  border: 1px solid #ef9a9a;
+}
+
+.analisis-instruccion.amarillo {
+  background: rgba(255,193,7,0.12);
+  color: #7c5e00;
+  border-color: #ffe082;
+}
+
+.analisis-instruccion.verde {
+  background: rgba(76,175,80,0.1);
+  color: #1b5e20;
+  border-color: #a5d6a7;
+}
+
+/* ── SEMÁFORO DE AFORO ─────────────────────────────────────────────────────── */
+
+/* Badges de canal en la tabla */
+.canal-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.canal-badge {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.canal-verde {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid #a5d6a7;
+}
+
+.canal-amarillo {
+  background-color: #fffde7;
+  color: #7c5e00;
+  border: 1px solid #fff176;
+}
+
+.canal-rojo {
+  background-color: #ffebee;
+  color: #b71c1c;
+  border: 1px solid #ef9a9a;
+}
+
+.puntaje {
+  color: var(--color-texto-suave);
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+}
+
+/* Filas coloreadas según canal */
+.fila-roja {
+  background-color: #fff5f5;
+  border-left: 3px solid #ef5350;
+}
+
+.fila-amarilla {
+  background-color: #fffdf0;
+  border-left: 3px solid #ffc107;
+}
+
+/* ── PANEL DE RESULTADO DEL SEMÁFORO ───────────────────────────────────────── */
+
+.panel-resultado {
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.resultado-verde    { background-color: #e8f5e9; border: 2px solid #66bb6a; }
+.resultado-amarillo { background-color: #fffde7; border: 2px solid #ffca28; }
+.resultado-rojo     { background-color: #ffebee; border: 2px solid #ef5350; }
+
+.resultado-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.resultado-emoji {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.resultado-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  border: none;
+  padding: 0;
+}
+
+.resultado-tracking {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.9rem;
+  color: var(--color-texto-suave);
+}
+
+.btn-cerrar {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--color-texto-suave);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-cerrar:hover {
+  background-color: rgba(0,0,0,0.1);
+}
+
+.resultado-descripcion {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+}
+
+.resultado-acciones {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── SEPARADOR DE SECCIÓN DE RIESGO EN FORMULARIO ─────────────────────────── */
+
+.separador-riesgo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primario);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.separador-riesgo::before,
+.separador-riesgo::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-borde);
+}
+
+.subtitulo-form {
+  margin: -1rem 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--color-texto-suave);
+  font-style: italic;
+}
+
+/* ── BOTONES DE ACCIÓN POR CANAL ───────────────────────────────────────────── */
+
+.btn-secundario {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-secundario:hover { background-color: #bbdefb; }
+
+.btn-accion {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-accion:hover { background-color: #c8e6c9; }
+
+.btn-accion.btn-alerta {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  animation: pulso 1.5s infinite;
+}
+
+@keyframes pulso {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(239, 83, 80, 0); }
+}
+
+.btn-adjunto {
+  background-color: #fff8e1;
+  color: #f57f17;
+  border: 1px solid #ffe082;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-adjunto:hover { background-color: #ffecb3; }
+
+.btn-adjunto.btn-urgente {
+  background-color: #ffe0b2;
+  color: #bf360c;
+  border: 1px solid #ffcc02;
+  font-weight: 700;
+}
+
+/* ── BOTÓN ELIMINAR (solo Admin) ──────────────────────────────────────────── */
+
+.btn-eliminar {
+  background-color: #ffebee;
+  color: #b71c1c;
+  border: 1px solid #ef9a9a;
+  padding: 0.4rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  line-height: 1;
+}
+
+.btn-eliminar:hover {
+  background-color: #ffcdd2;
+  transform: scale(1.1);
+}
+
+.btn-eliminar:active {
+  transform: scale(0.95);
+}
+
+/* ── BOTÓN "VER ANÁLISIS" (visible para todos los roles) ──────────────────── */
+
+.btn-analisis {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.83rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-analisis:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.btn-analisis.btn-analisis-activo {
+  background-color: #0d47a1;
+  color: white;
+  border-color: #0d47a1;
+}
+
+.btn-analisis.btn-analisis-activo:hover {
+  background-color: #1565c0;
+}
+
+/* Fila resaltada al ver su análisis */
+.fila-seleccionada {
+  background-color: #e8f0fe !important;
+  border-left: 3px solid #0d47a1 !important;
+}
+
+/* Indicador de carga del análisis */
+.cargando-analisis {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: #f0f4ff;
+  border: 1px solid #c5d5f8;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  color: #0d47a1;
+  font-size: 0.9rem;
+  animation: pulsoSuave 1.2s ease infinite;
+}
+
+@keyframes pulsoSuave {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+.spinner { font-size: 1.2rem; }
+
+/* Texto de motivo en el panel de análisis */
+.motivo-text {
+  font-style: italic;
+  color: #555;
+  font-size: 0.8rem;
+}

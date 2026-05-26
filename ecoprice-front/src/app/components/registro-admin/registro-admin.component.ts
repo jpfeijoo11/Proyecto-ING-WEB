@@ -37,6 +37,9 @@ export class RegistroAdminComponent implements OnInit {
   mensajeError: string = '';
   mensajeExito: string = '';
 
+  // ID del usuario logueado (para no permitir que se borre a sí mismo)
+  idUsuarioActual: number | null = null;
+
   constructor(
     private aduanaService: AduanaService,
     private router: Router
@@ -55,10 +58,19 @@ export class RegistroAdminComponent implements OnInit {
       this.router.navigate(['/login']);
     }
 
+    // Guardar ID del usuario logueado para proteger su propia cuenta
+    if (usuarioJson) {
+      const user = JSON.parse(usuarioJson);
+      this.idUsuarioActual = user.id ?? null;
+    }
+
     // Cargar países al iniciar
     this.aduanaService.getPaises().subscribe(data => {
       this.paises = data;
     });
+
+    // Cargar la lista de usuarios inmediatamente
+    this.cargarUsuarios();
   }
 
   // Lógica de ubicación
@@ -104,14 +116,48 @@ export class RegistroAdminComponent implements OnInit {
     });
   }
 
-  // Método para consultar la base de datos
-  consultarUsuarios(): void {
+  // Carga (o recarga) la lista de usuarios — no hace toggle, solo actualiza
+  cargarUsuarios(): void {
     this.aduanaService.getUsuarios().subscribe({
       next: (data) => {
         this.usuariosRegistrados = data;
-        this.mostrarTabla = !this.mostrarTabla;
+        this.mostrarTabla = true;
       },
       error: () => alert('No se pudo conectar con el servidor para listar usuarios.')
+    });
+  }
+
+  // Método para alternar visibilidad de tabla (botón opcional)
+  consultarUsuarios(): void {
+    if (this.mostrarTabla) {
+      this.mostrarTabla = false;
+    } else {
+      this.cargarUsuarios();
+    }
+  }
+
+  // Eliminar un usuario por ID
+  eliminarUsuario(usuario: any): void {
+    if (usuario.id === this.idUsuarioActual) {
+      alert('⚠️ No puedes eliminar tu propia cuenta de administrador.');
+      return;
+    }
+    const confirmar = confirm(
+      `¿Eliminar al usuario "${usuario.nombreCompleto}" (${usuario.rol})?\n\nEsta acción no se puede deshacer.`
+    );
+    if (!confirmar) return;
+
+    this.aduanaService.eliminarUsuario(usuario.id).subscribe({
+      next: () => {
+        this.mensajeExito = `Usuario "${usuario.nombreCompleto}" eliminado correctamente.`;
+        this.mensajeError = '';
+        // Actualizar la lista sin volver a pedir al servidor (actualización inmediata)
+        this.usuariosRegistrados = this.usuariosRegistrados.filter(u => u.id !== usuario.id);
+      },
+      error: () => {
+        this.mensajeError = 'No se pudo eliminar el usuario. Intenta de nuevo.';
+        this.mensajeExito = '';
+      }
     });
   }
 }

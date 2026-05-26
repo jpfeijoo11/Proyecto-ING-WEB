@@ -1,0 +1,313 @@
+.contenedor-dashboard { padding: 3rem 2rem; max-width: 1000px; margin: 0 auto; font-family: sans-serif;}
+.bienvenida { margin-bottom: 3rem; text-align: center; color: #333;}
+.grid-modulos { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; justify-content: center;}
+.tarjeta-modulo { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 2rem; text-align: center; text-decoration: none; color: #333; transition: transform 0.2s, box-shadow 0.2s; display: block;}
+.tarjeta-modulo:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+.icono { font-size: 3rem; margin-bottom: 1rem; }
+.tarjeta-modulo h2 { color: #0d47a1; margin-bottom: 0.5rem; }
+
+/* ── PANEL DE ALERTAS CANAL ROJO ─────────────────────────────────────────── */
+.panel-alertas {
+  background-color: #fff5f5;
+  border: 2px solid #ef5350;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2.5rem;
+  animation: parpadeo 2s ease infinite;
+}
+
+@keyframes parpadeo {
+  0%, 100% { border-color: #ef5350; }
+  50%       { border-color: #b71c1c; }
+}
+
+.alerta-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.alerta-icono {
+  font-size: 2rem;
+}
+
+.alerta-header h2 {
+  margin: 0;
+  color: #b71c1c;
+  font-size: 1.1rem;
+}
+
+.alerta-header p {
+  margin: 0.25rem 0 0 0;
+  color: #c62828;
+  font-size: 0.9rem;
+}
+
+.lista-alertas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.item-alerta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  border: 1px solid #ef9a9a;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+}
+
+.alerta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.alerta-ruta {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.alerta-puntaje {
+  font-size: 0.8rem;
+  color: #c62828;
+  font-weight: 600;
+}
+
+.alerta-estado {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.badge-estado {
+  background-color: #ffebee;
+  color: #b71c1c;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.btn-ir-operacion {
+  background-color: #b71c1c;
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.btn-ir-operacion:hover {
+  background-color: #7f0000;
+}
+
+/* ── SECCIÓN DE ESTADÍSTICAS GLOBALES ──────────────────────────────────────── */
+
+.seccion-estadisticas {
+  margin-bottom: 2.5rem;
+}
+
+.seccion-titulo {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0d47a1;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e3f2fd;
+}
+
+.stat-cargando {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Grid de 4 tarjetas de totales */
+.stat-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.stat-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.stat-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 900px) {
+  .stat-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .stat-grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 500px) {
+  .stat-grid-4 { grid-template-columns: 1fr; }
+}
+
+/* Tarjetas de totales */
+.stat-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.25rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-top: 4px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-total   { border-top-color: #0d47a1; }
+.stat-verde   { border-top-color: #43a047; }
+.stat-amarillo { border-top-color: #fbc02d; }
+.stat-rojo    { border-top-color: #e53935; }
+
+.stat-icono { font-size: 1.8rem; margin-bottom: 0.25rem; }
+
+.stat-valor {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.82rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-pct {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #888;
+  margin-top: 0.15rem;
+}
+
+/* Tarjetas de ranking */
+.ranking-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ranking-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.ranking-icono {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.ranking-titulo {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0d47a1;
+}
+
+.ranking-subtitulo {
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 0.15rem;
+}
+
+.ranking-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ranking-nombre {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.ranking-detalle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ranking-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badge-producto {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.badge-rojo    { background-color: #ffebee; color: #b71c1c; }
+.badge-amarillo { background-color: #fffde7; color: #7c5e00; }
+.badge-verde   { background-color: #e8f5e9; color: #1b5e20; }
+.badge-pais    { background-color: #f3e5f5; color: #6a1b9a; }
+
+.ranking-categoria {
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+}
+
+.ranking-conteo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.conteo-numero {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0d47a1;
+  line-height: 1;
+}
+
+.conteo-numero.conteo-alerta { color: #b71c1c; }
+
+.conteo-label {
+  font-size: 0.82rem;
+  color: #666;
+}
+
+.conteo-total {
+  font-size: 0.78rem;
+  color: #aaa;
+}
+
+.conteo-alerta-label {
+  font-size: 0.78rem;
+  color: #c62828;
+  font-weight: 600;
+}
+
+.ranking-vacio {
+  font-size: 0.85rem;
+  color: #aaa;
+  font-style: italic;
+  padding: 1rem 0;
+  text-align: center;
+}
