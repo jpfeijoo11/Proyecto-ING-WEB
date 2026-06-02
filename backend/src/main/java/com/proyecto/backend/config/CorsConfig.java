@@ -14,7 +14,11 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // Aplica a todos los endpoints
-                        .allowedOrigins("http://localhost:4200") // Permite peticiones desde Angular
+                        .allowedOriginPatterns(
+                            "http://localhost:4200",
+                            "https://*.vercel.app",
+                            "https://proyecto-ing-web.onrender.com"
+                        ) // Permite Angular local + Vercel + Render
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Métodos permitidos
                         .allowedHeaders("*")
                         .allowCredentials(true);
