@@ -37,8 +37,18 @@ public class DetalleRiesgoDTO {
     /** Puntos sumados por la restricción arancelaria (0 o 30) */
     private int puntosMercancia;
 
+    // ── VECTOR 4: Cruce importador_historial vs lista_negra_global ───────────
+    /** true si el RUC del importador aparece en la lista negra global */
+    private boolean importadorEnListaNegra;
+    /** Organismo que sancionó al importador (OFAC, ONU, INTERPOL, UE) */
+    private String organismoSancionador;
+    /** Motivo de la sanción internacional */
+    private String motivoSancion;
+    /** Puntos extra por estar en lista negra (0 o 50) */
+    private int puntosListaNegra;
+
     // ── RESULTADO FINAL ───────────────────────────────────────────────────────
-    /** Suma total: puntosOrigen + puntosImportador + puntosMercancia */
+    /** Suma total: puntosOrigen + puntosImportador + puntosMercancia + puntosListaNegra */
     private int puntajeTotal;
     /** Canal asignado: VERDE | AMARILLO | ROJO */
     private String canalAforo;
@@ -90,4 +100,16 @@ public class DetalleRiesgoDTO {
 
     public String getDescripcionCanal() { return descripcionCanal; }
     public void setDescripcionCanal(String descripcionCanal) { this.descripcionCanal = descripcionCanal; }
+
+    public boolean isImportadorEnListaNegra() { return importadorEnListaNegra; }
+    public void setImportadorEnListaNegra(boolean importadorEnListaNegra) { this.importadorEnListaNegra = importadorEnListaNegra; }
+
+    public String getOrganismoSancionador() { return organismoSancionador; }
+    public void setOrganismoSancionador(String organismoSancionador) { this.organismoSancionador = organismoSancionador; }
+
+    public String getMotivoSancion() { return motivoSancion; }
+    public void setMotivoSancion(String motivoSancion) { this.motivoSancion = motivoSancion; }
+
+    public int getPuntosListaNegra() { return puntosListaNegra; }
+    public void setPuntosListaNegra(int puntosListaNegra) { this.puntosListaNegra = puntosListaNegra; }
 }

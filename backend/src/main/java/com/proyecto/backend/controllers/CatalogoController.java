@@ -2,9 +2,11 @@ package com.proyecto.backend.controllers;
 
 import com.proyecto.backend.models.CatalogoRiesgoPais;
 import com.proyecto.backend.models.ImportadorHistorial;
+import com.proyecto.backend.models.ListaNegraGlobal;
 import com.proyecto.backend.models.RestriccionArancelaria;
 import com.proyecto.backend.repositories.CatalogoRiesgoPaisRepository;
 import com.proyecto.backend.repositories.ImportadorHistorialRepository;
+import com.proyecto.backend.repositories.ListaNegraGlobalRepository;
 import com.proyecto.backend.repositories.RestriccionArancelariaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,9 @@ public class CatalogoController {
 
     @Autowired
     private RestriccionArancelariaRepository restriccionRepo;
+
+    @Autowired
+    private ListaNegraGlobalRepository listaNegraRepo;
 
     // ── Catálogo de Riesgo por País/Puerto ───────────────────────────────────
     @GetMapping("/paises-riesgo")
@@ -60,5 +65,16 @@ public class CatalogoController {
     @PostMapping("/arancelarios")
     public RestriccionArancelaria crearRestriccion(@RequestBody RestriccionArancelaria restriccion) {
         return restriccionRepo.save(restriccion);
+    }
+
+    // ── Lista Negra Global ───────────────────────────────────────────────────
+    @GetMapping("/lista-negra")
+    public List<ListaNegraGlobal> getListaNegra() {
+        return listaNegraRepo.findAll();
+    }
+
+    @PostMapping("/lista-negra")
+    public ListaNegraGlobal agregarListaNegra(@RequestBody ListaNegraGlobal entidad) {
+        return listaNegraRepo.save(entidad);
     }
 }

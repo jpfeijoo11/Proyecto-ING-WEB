@@ -3,12 +3,14 @@ package com.proyecto.backend.config;
 import com.proyecto.backend.models.CatalogoRiesgoPais;
 import com.proyecto.backend.models.Ciudad;
 import com.proyecto.backend.models.ImportadorHistorial;
+import com.proyecto.backend.models.ListaNegraGlobal;
 import com.proyecto.backend.models.Pais;
 import com.proyecto.backend.models.Provincia;
 import com.proyecto.backend.models.RestriccionArancelaria;
 import com.proyecto.backend.repositories.CatalogoRiesgoPaisRepository;
 import com.proyecto.backend.repositories.CiudadRepository;
 import com.proyecto.backend.repositories.ImportadorHistorialRepository;
+import com.proyecto.backend.repositories.ListaNegraGlobalRepository;
 import com.proyecto.backend.repositories.PaisRepository;
 import com.proyecto.backend.repositories.ProvinciaRepository;
 import com.proyecto.backend.repositories.RestriccionArancelariaRepository;
@@ -31,6 +33,7 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired private PaisRepository paisRepo;
     @Autowired private ProvinciaRepository provinciaRepo;
     @Autowired private CiudadRepository ciudadRepo;
+    @Autowired private ListaNegraGlobalRepository listaNegraRepo;
 
     @Override
     public void run(String... args) {
@@ -38,6 +41,7 @@ public class DataInitializer implements CommandLineRunner {
         cargarImportadores();
         cargarArancelarios();
         cargarUbicaciones();
+        cargarListaNegra();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -244,5 +248,38 @@ public class DataInitializer implements CommandLineRunner {
         ciudadRepo.save(valenciaCity);
 
         System.out.println("[DataInitializer] ✅ Ubicaciones cargadas: Ecuador, USA, España.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LISTA NEGRA GLOBAL — solo si la tabla está vacía
+    // RUCs que coinciden con importadores del historial para demostrar el JOIN
+    // ─────────────────────────────────────────────────────────────────────────
+    private void cargarListaNegra() {
+        if (listaNegraRepo.count() > 0) return;
+
+        // ⚠️ GlobalTrade Corp (RUC: 0994567890001) — coincide con importador_historial
+        listaNegraRepo.save(new ListaNegraGlobal(
+            "0994567890001", "GlobalTrade Corp.",
+            "OFAC", "LAVADO_ACTIVOS", 50));
+
+        // ⚠️ Andina Logistics (RUC: 0995678901001) — coincide con importador_historial
+        listaNegraRepo.save(new ListaNegraGlobal(
+            "0995678901001", "Andina Logistics S.A.",
+            "ONU", "NARCOTRAFICO", 50));
+
+        // Otras entidades sancionadas internacionales (no coinciden con importadores locales)
+        listaNegraRepo.save(new ListaNegraGlobal(
+            "CO-NIT-900123456", "Cartel Import SAS",
+            "INTERPOL", "NARCOTRAFICO", 50));
+
+        listaNegraRepo.save(new ListaNegraGlobal(
+            "PA-RUC-88776655", "Offshore Shell Corp.",
+            "OFAC", "LAVADO_ACTIVOS", 50));
+
+        listaNegraRepo.save(new ListaNegraGlobal(
+            "VE-RIF-J123456789", "Grupo Fantasma C.A.",
+            "UE", "EVASION_FISCAL", 50));
+
+        System.out.println("[DataInitializer] ✅ Lista Negra Global cargada: 5 entidades sancionadas.");
     }
 }

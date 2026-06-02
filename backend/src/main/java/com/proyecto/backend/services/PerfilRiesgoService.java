@@ -10,19 +10,24 @@ import org.springframework.stereotype.Service;
 /**
  * Motor de Perfilamiento de Riesgo Aduanero — "El Semáforo de Aforos"
  *
- * Implementación técnica: ejecuta UNA SOLA consulta SQL con 3 LEFT JOINs
+ * Implementación técnica: ejecuta UNA SOLA consulta SQL con 4 LEFT JOINs
  * que cruza simultáneamente las tablas:
- *   - catalogo_riesgo_pais       (vector de origen geográfico)
- *   - importador_historial       (vector de historial empresarial)
- *   - restricciones_arancelarias (vector de mercancía restringida)
+ *   - catalogo_riesgo_pais       (vector 1: origen geográfico)
+ *   - importador_historial       (vector 2: historial empresarial)
+ *   - restricciones_arancelarias (vector 3: mercancía restringida)
+ *   - lista_negra_global         (vector 4: sanciones internacionales OFAC/ONU)
+ *
+ * El vector 4 es notable porque cruza DOS tablas de catálogo entre sí:
+ * toma el ruc_empresa de importador_historial y lo compara contra
+ * lista_negra_global.ruc_sancionado — un JOIN entre catálogos, no contra operaciones.
  *
  * El score y el canal se calculan DENTRO de la base de datos (CASE/COALESCE
  * en PostgreSQL), no en lógica Java de múltiples queries separados.
  *
  * Canal resultante:
- *   🟢 VERDE    (0  – 30 pts): Desaduanización Automática
- *   🟡 AMARILLO (31 – 70 pts): Aforo Documental
- *   🔴 ROJO     (71 – 100 pts): Aforo Físico Intrusivo
+ *   🟢 VERDE    (0  –  30 pts): Desaduanización Automática
+ *   🟡 AMARILLO (31 –  70 pts): Aforo Documental
+ *   🔴 ROJO     (71 – 150 pts): Aforo Físico Intrusivo
  */
 @Service
 public class PerfilRiesgoService {
@@ -42,13 +47,13 @@ public class PerfilRiesgoService {
      */
     private static final String SQL_ANALISIS_RIESGO = """
         SELECT
-            -- ── RESULTADO DE CRUCE: catalogo_riesgo_pais ────────────────────
+            -- ── VECTOR 1: catalogo_riesgo_pais ──────────────────────────────
             CASE WHEN crp.id IS NOT NULL THEN true  ELSE false END  AS origen_en_catalogo,
             COALESCE(crp.nivel_riesgo, 'N/A')                        AS nivel_riesgo_pais,
             COALESCE(crp.puntos,       0)                            AS puntos_origen,
             COALESCE(crp.motivo,       'Puerto no catalogado')       AS motivo_pais,
 
-            -- ── RESULTADO DE CRUCE: importador_historial ────────────────────
+            -- ── VECTOR 2: importador_historial ───────────────────────────────
             COALESCE(ih.nombre_empresa,      'Sin importador')       AS nombre_importador,
             COALESCE(ih.infracciones_previas, 0)                     AS infracciones_importador,
             CASE WHEN COALESCE(ih.infracciones_previas, 0) > 2
@@ -56,18 +61,28 @@ public class PerfilRiesgoService {
             CASE WHEN COALESCE(ih.infracciones_previas, 0) > 2
                  THEN true ELSE false END                            AS importador_infractor,
 
-            -- ── RESULTADO DE CRUCE: restricciones_arancelarias ──────────────
+            -- ── VECTOR 3: restricciones_arancelarias ─────────────────────────
             COALESCE(ra.descripcion,     'Mercancía general')        AS descripcion_mercancia,
             COALESCE(ra.categoria,       'GENERAL')                  AS categoria_mercancia,
             COALESCE(ra.requiere_permiso, false)                     AS requiere_permiso,
             CASE WHEN COALESCE(ra.requiere_permiso, false) = true
                  THEN 30 ELSE 0 END                                  AS puntos_mercancia,
 
-            -- ── PUNTAJE TOTAL (calculado en BD) ─────────────────────────────
+            -- ── VECTOR 4: importador_historial ⟷ lista_negra_global ──────────
+            -- JOIN entre DOS catálogos: cruza ruc_empresa del importador
+            -- contra ruc_sancionado de la lista negra internacional (OFAC/ONU)
+            CASE WHEN lng.id IS NOT NULL THEN true ELSE false END    AS importador_en_lista_negra,
+            COALESCE(lng.organismo_sancionador, 'N/A')               AS organismo_sancionador,
+            COALESCE(lng.motivo_sancion,        'Sin sancion')       AS motivo_sancion,
+            CASE WHEN lng.id IS NOT NULL
+                 THEN COALESCE(lng.puntos_extra, 50) ELSE 0 END      AS puntos_lista_negra,
+
+            -- ── PUNTAJE TOTAL (4 vectores calculados en BD) ──────────────────
             (
                 COALESCE(crp.puntos, 0) +
                 CASE WHEN COALESCE(ih.infracciones_previas, 0) > 2 THEN 40 ELSE 0 END +
-                CASE WHEN COALESCE(ra.requiere_permiso, false) = true THEN 30 ELSE 0 END
+                CASE WHEN COALESCE(ra.requiere_permiso, false) = true THEN 30 ELSE 0 END +
+                CASE WHEN lng.id IS NOT NULL THEN COALESCE(lng.puntos_extra, 50) ELSE 0 END
             ) AS puntaje_total
 
         FROM (VALUES (1)) AS dummy(x)
@@ -80,6 +95,9 @@ public class PerfilRiesgoService {
 
         LEFT JOIN restricciones_arancelarias ra
             ON LOWER(TRIM(ra.codigo_arancelario)) = LOWER(TRIM(:codigoArancelario))
+
+        LEFT JOIN lista_negra_global lng
+            ON LOWER(TRIM(lng.ruc_sancionado)) = LOWER(TRIM(COALESCE(ih.ruc_empresa, '')))
         """;
 
     @Autowired
@@ -101,7 +119,7 @@ public class PerfilRiesgoService {
                 .addValue("idImportador",        operacion.getIdImportador())  // puede ser null → no coincide
                 .addValue("codigoArancelario",   orVacio(operacion.getCodigoArancelario()));
 
-        // Ejecutar la consulta con 3 LEFT JOINs — resultado en una sola fila
+        // Ejecutar la consulta con 4 LEFT JOINs — resultado en una sola fila
         DetalleRiesgoDTO detalle = jdbc.queryForObject(SQL_ANALISIS_RIESGO, params, (rs, rowNum) -> {
             DetalleRiesgoDTO dto = new DetalleRiesgoDTO();
 
@@ -123,7 +141,13 @@ public class PerfilRiesgoService {
             dto.setRequierePermiso(rs.getBoolean("requiere_permiso"));
             dto.setPuntosMercancia(rs.getInt("puntos_mercancia"));
 
-            // Puntaje total calculado en BD
+            // Vector 4 — lista negra global (JOIN entre dos catálogos)
+            dto.setImportadorEnListaNegra(rs.getBoolean("importador_en_lista_negra"));
+            dto.setOrganismoSancionador(rs.getString("organismo_sancionador"));
+            dto.setMotivoSancion(rs.getString("motivo_sancion"));
+            dto.setPuntosListaNegra(rs.getInt("puntos_lista_negra"));
+
+            // Puntaje total calculado en BD (4 vectores)
             dto.setPuntajeTotal(rs.getInt("puntaje_total"));
 
             return dto;
@@ -185,6 +209,10 @@ public class PerfilRiesgoService {
             dto.setCategoriaMercancia(rs.getString("categoria_mercancia"));
             dto.setRequierePermiso(rs.getBoolean("requiere_permiso"));
             dto.setPuntosMercancia(rs.getInt("puntos_mercancia"));
+            dto.setImportadorEnListaNegra(rs.getBoolean("importador_en_lista_negra"));
+            dto.setOrganismoSancionador(rs.getString("organismo_sancionador"));
+            dto.setMotivoSancion(rs.getString("motivo_sancion"));
+            dto.setPuntosListaNegra(rs.getInt("puntos_lista_negra"));
             dto.setPuntajeTotal(rs.getInt("puntaje_total"));
             return dto;
         });
