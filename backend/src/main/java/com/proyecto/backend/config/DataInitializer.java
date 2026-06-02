@@ -1,10 +1,16 @@
 package com.proyecto.backend.config;
 
 import com.proyecto.backend.models.CatalogoRiesgoPais;
+import com.proyecto.backend.models.Ciudad;
 import com.proyecto.backend.models.ImportadorHistorial;
+import com.proyecto.backend.models.Pais;
+import com.proyecto.backend.models.Provincia;
 import com.proyecto.backend.models.RestriccionArancelaria;
 import com.proyecto.backend.repositories.CatalogoRiesgoPaisRepository;
+import com.proyecto.backend.repositories.CiudadRepository;
 import com.proyecto.backend.repositories.ImportadorHistorialRepository;
+import com.proyecto.backend.repositories.PaisRepository;
+import com.proyecto.backend.repositories.ProvinciaRepository;
 import com.proyecto.backend.repositories.RestriccionArancelariaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -22,12 +28,16 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired private CatalogoRiesgoPaisRepository catalogoPaisRepo;
     @Autowired private ImportadorHistorialRepository importadorRepo;
     @Autowired private RestriccionArancelariaRepository restriccionRepo;
+    @Autowired private PaisRepository paisRepo;
+    @Autowired private ProvinciaRepository provinciaRepo;
+    @Autowired private CiudadRepository ciudadRepo;
 
     @Override
     public void run(String... args) {
         cargarPuertos();
         cargarImportadores();
         cargarArancelarios();
+        cargarUbicaciones();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -146,5 +156,93 @@ public class DataInitializer implements CommandLineRunner {
         restriccionRepo.save(new RestriccionArancelaria("2710.12", "Gasolina y combustibles derivados",   false, "COMBUSTIBLES"));
 
         System.out.println("[DataInitializer] ✅ Restricciones arancelarias cargadas.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // UBICACIONES — solo si la tabla pais está vacía
+    // ─────────────────────────────────────────────────────────────────────────
+    private void cargarUbicaciones() {
+        if (paisRepo.count() > 0) return;
+
+        // ── ECUADOR ──────────────────────────────────────────────────────────
+        Pais ecuador = new Pais();
+        ecuador.setNombre("Ecuador");
+        ecuador = paisRepo.save(ecuador);
+
+        Provincia pichincha = new Provincia(); pichincha.setNombre("Pichincha"); pichincha.setPais(ecuador);
+        pichincha = provinciaRepo.save(pichincha);
+        Ciudad quito = new Ciudad(); quito.setNombre("Quito"); quito.setProvincia(pichincha);
+        ciudadRepo.save(quito);
+        Ciudad sangolqui = new Ciudad(); sangolqui.setNombre("Sangolqui"); sangolqui.setProvincia(pichincha);
+        ciudadRepo.save(sangolqui);
+
+        Provincia guayas = new Provincia(); guayas.setNombre("Guayas"); guayas.setPais(ecuador);
+        guayas = provinciaRepo.save(guayas);
+        Ciudad guayaquil = new Ciudad(); guayaquil.setNombre("Guayaquil"); guayaquil.setProvincia(guayas);
+        ciudadRepo.save(guayaquil);
+        Ciudad samborondon = new Ciudad(); samborondon.setNombre("Samborondon"); samborondon.setProvincia(guayas);
+        ciudadRepo.save(samborondon);
+
+        Provincia azuay = new Provincia(); azuay.setNombre("Azuay"); azuay.setPais(ecuador);
+        azuay = provinciaRepo.save(azuay);
+        Ciudad cuenca = new Ciudad(); cuenca.setNombre("Cuenca"); cuenca.setProvincia(azuay);
+        ciudadRepo.save(cuenca);
+
+        Provincia manabi = new Provincia(); manabi.setNombre("Manabi"); manabi.setPais(ecuador);
+        manabi = provinciaRepo.save(manabi);
+        Ciudad manta = new Ciudad(); manta.setNombre("Manta"); manta.setProvincia(manabi);
+        ciudadRepo.save(manta);
+        Ciudad portoviejo = new Ciudad(); portoviejo.setNombre("Portoviejo"); portoviejo.setProvincia(manabi);
+        ciudadRepo.save(portoviejo);
+
+        // ── USA ──────────────────────────────────────────────────────────────
+        Pais usa = new Pais();
+        usa.setNombre("USA");
+        usa = paisRepo.save(usa);
+
+        Provincia florida = new Provincia(); florida.setNombre("Florida"); florida.setPais(usa);
+        florida = provinciaRepo.save(florida);
+        Ciudad miami = new Ciudad(); miami.setNombre("Miami"); miami.setProvincia(florida);
+        ciudadRepo.save(miami);
+        Ciudad orlando = new Ciudad(); orlando.setNombre("Orlando"); orlando.setProvincia(florida);
+        ciudadRepo.save(orlando);
+
+        Provincia california = new Provincia(); california.setNombre("California"); california.setPais(usa);
+        california = provinciaRepo.save(california);
+        Ciudad losAngeles = new Ciudad(); losAngeles.setNombre("Los Angeles"); losAngeles.setProvincia(california);
+        ciudadRepo.save(losAngeles);
+        Ciudad sanFrancisco = new Ciudad(); sanFrancisco.setNombre("San Francisco"); sanFrancisco.setProvincia(california);
+        ciudadRepo.save(sanFrancisco);
+
+        Provincia newYork = new Provincia(); newYork.setNombre("New York"); newYork.setPais(usa);
+        newYork = provinciaRepo.save(newYork);
+        Ciudad nyc = new Ciudad(); nyc.setNombre("New York City"); nyc.setProvincia(newYork);
+        ciudadRepo.save(nyc);
+
+        // ── ESPAÑA ───────────────────────────────────────────────────────────
+        Pais espana = new Pais();
+        espana.setNombre("España");
+        espana = paisRepo.save(espana);
+
+        Provincia madrid = new Provincia(); madrid.setNombre("Madrid"); madrid.setPais(espana);
+        madrid = provinciaRepo.save(madrid);
+        Ciudad madridCity = new Ciudad(); madridCity.setNombre("Madrid"); madridCity.setProvincia(madrid);
+        ciudadRepo.save(madridCity);
+        Ciudad alcala = new Ciudad(); alcala.setNombre("Alcala de Henares"); alcala.setProvincia(madrid);
+        ciudadRepo.save(alcala);
+
+        Provincia barcelona = new Provincia(); barcelona.setNombre("Barcelona"); barcelona.setPais(espana);
+        barcelona = provinciaRepo.save(barcelona);
+        Ciudad barcelonaCity = new Ciudad(); barcelonaCity.setNombre("Barcelona"); barcelonaCity.setProvincia(barcelona);
+        ciudadRepo.save(barcelonaCity);
+        Ciudad badalona = new Ciudad(); badalona.setNombre("Badalona"); badalona.setProvincia(barcelona);
+        ciudadRepo.save(badalona);
+
+        Provincia valencia = new Provincia(); valencia.setNombre("Valencia"); valencia.setPais(espana);
+        valencia = provinciaRepo.save(valencia);
+        Ciudad valenciaCity = new Ciudad(); valenciaCity.setNombre("Valencia"); valenciaCity.setProvincia(valencia);
+        ciudadRepo.save(valenciaCity);
+
+        System.out.println("[DataInitializer] ✅ Ubicaciones cargadas: Ecuador, USA, España.");
     }
 }
