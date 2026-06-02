@@ -21,7 +21,7 @@
       </div>
       <div class="analisis-score">
         <span class="score-numero">{{ ultimoDetalle.puntajeTotal }}</span>
-        <span class="score-label">/ 100 pts</span>
+        <span class="score-label">/ 150 pts</span>
       </div>
       <button class="btn-cerrar" (click)="cerrarAnalisis()">✕</button>
     </div>
@@ -109,6 +109,37 @@
             <span class="dato-valor" [ngClass]="ultimoDetalle.requierePermiso ? 'valor-alerta' : 'valor-ok'">
               {{ ultimoDetalle.requierePermiso ? '🔒 Sí — Mercancía restringida' : '✅ No requerido' }}
             </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vector 4: JOIN entre catálogos — importador_historial vs lista_negra_global -->
+      <div class="vector-card" [ngClass]="ultimoDetalle.importadorEnListaNegra ? 'vector-alerta' : 'vector-ok'">
+        <div class="vector-header">
+          <span class="vector-icono">🚫</span>
+          <span class="vector-titulo">Vector 4 — Lista Negra Global</span>
+          <span class="vector-pts" [ngClass]="ultimoDetalle.puntosListaNegra > 0 ? 'pts-riesgo' : 'pts-ok'">
+            +{{ ultimoDetalle.puntosListaNegra }} pts
+          </span>
+        </div>
+        <div class="vector-body">
+          <div class="dato-fila">
+            <span class="dato-label">En lista negra:</span>
+            <span class="dato-valor" [ngClass]="ultimoDetalle.importadorEnListaNegra ? 'valor-alerta' : 'valor-ok'">
+              {{ ultimoDetalle.importadorEnListaNegra ? '🚨 SÍ — Entidad sancionada internacionalmente' : '✅ No figura en lista negra' }}
+            </span>
+          </div>
+          <div class="dato-fila" *ngIf="ultimoDetalle.importadorEnListaNegra">
+            <span class="dato-label">Organismo:</span>
+            <span class="dato-valor valor-alerta">{{ ultimoDetalle.organismoSancionador }}</span>
+          </div>
+          <div class="dato-fila" *ngIf="ultimoDetalle.importadorEnListaNegra">
+            <span class="dato-label">Motivo sanción:</span>
+            <span class="dato-valor valor-alerta">{{ ultimoDetalle.motivoSancion }}</span>
+          </div>
+          <div class="dato-fila" *ngIf="!ultimoDetalle.importadorEnListaNegra">
+            <span class="dato-label">Fuente:</span>
+            <span class="dato-valor">Cruce con OFAC · ONU · INTERPOL · UE</span>
           </div>
         </div>
       </div>

@@ -36,6 +36,11 @@ export interface DetalleRiesgo {
   categoriaMercancia: string;
   requierePermiso: boolean;
   puntosMercancia: number;
+  // Vector 4 — lista_negra_global
+  importadorEnListaNegra: boolean;
+  organismoSancionador: string;
+  motivoSancion: string;
+  puntosListaNegra: number;
   // Resultado final
   puntajeTotal: number;
   canalAforo: string;
