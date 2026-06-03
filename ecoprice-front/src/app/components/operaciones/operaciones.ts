@@ -180,29 +180,27 @@ export class OperacionesComponent implements OnInit {
   // ── Máquina de estados ──────────────── ───────────────────────────────────
 
   avanzarFlujo(operacion: OperacionAduanera): void {
-    this.aduanaService.actualizarEstadoOperacion(operacion.id!, this.getSiguienteEstado(operacion.estado)).subscribe({
+    this.aduanaService.actualizarEstadoOperacion(operacion.id!, this.getEstadosRegistro(String)).subscribe({
       next: (opActualizada) => {
         // Actualizar estado localmente sin recargar toda la lista
-        const index = this.operaciones.findIndex(op => op.id === opActualizada.id);
-        if (index !== -1) {
-          this.operaciones[index] = opActualizada;
-          // Si se está viendo el análisis de esta operación, actualizarlo también
-          if (this.operacionSeleccionadaId === opActualizada.id && this.ultimoDetalle) {
-            this.ultimoDetalle.canalAforo = opActualizada.canalAforo || this.ultimoDetalle.canalAforo;
-            this.ultimoDetalle.descripcionCanal = this.getLabelCanal(this.ultimoDetalle.canalAforo);
-          }
-        }
+        this.operaciones = this.operaciones.map(op => op.id === opActualizada.id ? opActualizada : op);
       },
       error: (err) => console.error('Error al avanzar flujo', err)
     });
   }
 
 
-  getSiguienteEstado(estado: string): string {
-    switch (estado) {
-      case 'DOCUMENTACION': return 'AFORO';
-      case 'AFORO':         return 'FINALIZADA';
-      default:             return estado; // no cambia
+  getEstadosRegistro(String: StringConstructor): string[] {
+    switch (this.rolActual) {
+      case 'AGENTE':
+        return ['DOCUMENTACION', 'AFORO', 'LIBERADA'];
+      case 'INSPECTOR':
+        return ['AFORO', 'LIBERADA'];
+      case 'ADMINISTRADOR':
+      case 'ADMIN':
+        return ['DOCUMENTACION', 'AFORO', 'LIBERADA'];
+      default:
+        return [];
     }
   }
 

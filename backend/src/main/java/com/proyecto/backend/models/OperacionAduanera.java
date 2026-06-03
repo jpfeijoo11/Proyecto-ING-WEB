@@ -23,6 +23,9 @@ public class OperacionAduanera {
     @Column(name = "puerto_origen")
     private String puertoOrigen;
 
+    @Column(name = "estado_registros")
+    private String estadoRegistros;
+
     @Column(name = "puerto_destino")
     private String puertoDestino;
 
@@ -90,4 +93,7 @@ public class OperacionAduanera {
 
     public Integer getPuntajeRiesgo() { return puntajeRiesgo; }
     public void setPuntajeRiesgo(Integer puntajeRiesgo) { this.puntajeRiesgo = puntajeRiesgo; }
+
+    public String getEstadoRegistros() { return estadoRegistros; }
+    public void setEstadoRegistros(String estadoRegistros) { this.estadoRegistros = estadoRegistros; }
 }
