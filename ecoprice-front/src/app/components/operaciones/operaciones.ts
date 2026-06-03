@@ -26,7 +26,8 @@ export class OperacionesComponent implements OnInit {
   // Catálogos para los selects del formulario
   importadores: ImportadorHistorial[] = [];
   arancelarios: RestriccionArancelaria[] = [];
-  puertosDisponibles: CatalogoRiesgoPais[] = [];  // ← preestablecidos desde BD
+  puertosDisponibles: CatalogoRiesgoPais[] = [];
+  fasesDisponibles: string[] = []; // ← preestablecidos desde BD
 
   // Control de permisos por rol
   rolActual: string = '';
@@ -172,42 +173,36 @@ export class OperacionesComponent implements OnInit {
     this.operacionSeleccionadaId = null;
   }
 
-  // ── Máquina de estados ───────────────────────────────────────────────────
+
+
+
+
+  // ── Máquina de estados ──────────────── ───────────────────────────────────
 
   avanzarFlujo(operacion: OperacionAduanera): void {
-    if (!operacion.id) return;
+    this.aduanaService.actualizarEstadoOperacion(operacion.id!, this.getSiguienteEstado(operacion.estado)).subscribe({
+      next: (opActualizada) => {
+        // Actualizar estado localmente sin recargar toda la lista
+        const index = this.operaciones.findIndex(op => op.id === opActualizada.id);
+        if (index !== -1) {
+          this.operaciones[index] = opActualizada;
+          // Si se está viendo el análisis de esta operación, actualizarlo también
+          if (this.operacionSeleccionadaId === opActualizada.id && this.ultimoDetalle) {
+            this.ultimoDetalle.canalAforo = opActualizada.canalAforo || this.ultimoDetalle.canalAforo;
+            this.ultimoDetalle.descripcionCanal = this.getLabelCanal(this.ultimoDetalle.canalAforo);
+          }
+        }
+      },
+      error: (err) => console.error('Error al avanzar flujo', err)
+    });
+  }
 
-    const canal = operacion.canalAforo || 'VERDE';
-    let siguienteEstado = '';
 
-    switch (operacion.estado) {
-      case 'DOCUMENTACION':   siguienteEstado = 'LOGISTICA';       break;
-      case 'LOGISTICA':       siguienteEstado = 'EN_TRANSITO';     break;
-      case 'EN_TRANSITO':     siguienteEstado = 'LLEGADA_PUERTO';  break;
-      case 'LLEGADA_PUERTO':  siguienteEstado = 'DESADUANIZACION'; break;
-      case 'DESADUANIZACION': siguienteEstado = 'CERRADO';         break;
-      default:
-        alert('El trámite ya ha finalizado o tiene un estado desconocido.');
-        return;
-    }
-
-    if (canal === 'AMARILLO' && operacion.estado === 'DOCUMENTACION') {
-      const ok = confirm(
-        `⚠️ CANAL AMARILLO — Aforo Documental\n\n` +
-        `¿Confirma que el Agente ya subió:\n` +
-        `  ✅ Factura comercial\n  ✅ Certificado de origen\n  ✅ Póliza de seguro?`
-      );
-      if (!ok) return;
-    }
-
-    if (confirm(`¿Avanzar "${operacion.numeroTracking}" → ${siguienteEstado}?`)) {
-      this.aduanaService.actualizarEstadoOperacion(operacion.id!, siguienteEstado).subscribe({
-        next: (response) => {
-          const idx = this.operaciones.findIndex(op => op.id === operacion.id);
-          if (idx !== -1) this.operaciones[idx] = response;
-        },
-        error: (err) => console.error('Error al actualizar estado', err)
-      });
+  getSiguienteEstado(estado: string): string {
+    switch (estado) {
+      case 'DOCUMENTACION': return 'AFORO';
+      case 'AFORO':         return 'FINALIZADA';
+      default:             return estado; // no cambia
     }
   }
 

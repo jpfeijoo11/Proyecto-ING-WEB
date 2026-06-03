@@ -13,11 +13,7 @@ public class EstadisticasController {
     @Autowired
     private EstadisticasService estadisticasService;
 
-    /**
-     * GET /api/estadisticas
-     * Devuelve estadísticas calculadas en tiempo real con queries SQL
-     * (GROUP BY, JOIN, COUNT, SUM). Visible para todos los roles.
-     */
+    
     @GetMapping
     public EstadisticasDTO obtenerEstadisticas() {
         return estadisticasService.obtenerEstadisticas();

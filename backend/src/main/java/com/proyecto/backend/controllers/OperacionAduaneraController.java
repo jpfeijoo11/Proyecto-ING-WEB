@@ -83,13 +83,7 @@ public class OperacionAduaneraController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * GET /api/operaciones/{id}/analisis
-     *
-     * Re-ejecuta el JOIN de 3 tablas para una operación ya guardada.
-     * Permite que cualquier usuario vea el desglose de riesgo haciendo
-     * click en un registro existente de la tabla.
-     */
+    
     @GetMapping("/{id}/analisis")
     public ResponseEntity<OperacionConRiesgoResponse> obtenerAnalisis(@PathVariable Long id) {
         return operacionRepository.findById(id)

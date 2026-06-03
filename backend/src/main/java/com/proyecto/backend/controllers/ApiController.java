@@ -12,10 +12,7 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:4200") 
 public class ApiController {
 
-    /**
-     * Endpoint de prueba para verificar que el backend está corriendo correctamente.
-     * Útil para el video de Loom o para diagnósticos rápidos.
-     */
+    
     @GetMapping("/status")
     public Map<String, String> getStatus() {
         Map<String, String> status = new HashMap<>();
