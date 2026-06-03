@@ -9,16 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Calcula estadísticas globales del sistema mediante consultas SQL
- * con JOIN, GROUP BY y funciones de agregación directas en PostgreSQL.
- *
- * Consultas ejecutadas:
- *  1. Producto más importado    → GROUP BY codigo_arancelario + LEFT JOIN restricciones
- *  2. Puerto con más riesgo     → GROUP BY puerto_origen + LEFT JOIN catalogo_riesgo_pais
- *  3. Empresa con más infracc.  → MAX(infracciones_previas) en importador_historial
- *  4. Resumen por canal de aforo → COUNT + GROUP BY canal_aforo
- */
+
 @Service
 public class EstadisticasService {
 

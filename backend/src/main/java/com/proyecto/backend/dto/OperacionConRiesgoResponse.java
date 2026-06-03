@@ -2,11 +2,7 @@ package com.proyecto.backend.dto;
 
 import com.proyecto.backend.models.OperacionAduanera;
 
-/**
- * Respuesta completa del POST /api/operaciones.
- * Incluye la operación guardada y el desglose detallado
- * del análisis de riesgo obtenido mediante JOIN en la BD.
- */
+
 public class OperacionConRiesgoResponse {
 
     private OperacionAduanera operacion;

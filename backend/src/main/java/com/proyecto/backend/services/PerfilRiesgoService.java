@@ -7,28 +7,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- * Motor de Perfilamiento de Riesgo Aduanero — "El Semáforo de Aforos"
- *
- * Implementación técnica: ejecuta UNA SOLA consulta SQL con 4 LEFT JOINs
- * que cruza simultáneamente las tablas:
- *   - catalogo_riesgo_pais       (vector 1: origen geográfico)
- *   - importador_historial       (vector 2: historial empresarial)
- *   - restricciones_arancelarias (vector 3: mercancía restringida)
- *   - lista_negra_global         (vector 4: sanciones internacionales OFAC/ONU)
- *
- * El vector 4 es notable porque cruza DOS tablas de catálogo entre sí:
- * toma el ruc_empresa de importador_historial y lo compara contra
- * lista_negra_global.ruc_sancionado — un JOIN entre catálogos, no contra operaciones.
- *
- * El score y el canal se calculan DENTRO de la base de datos (CASE/COALESCE
- * en PostgreSQL), no en lógica Java de múltiples queries separados.
- *
- * Canal resultante:
- *   🟢 VERDE    (0  –  30 pts): Desaduanización Automática
- *   🟡 AMARILLO (31 –  70 pts): Aforo Documental
- *   🔴 ROJO     (71 – 150 pts): Aforo Físico Intrusivo
- */
+
 @Service
 public class PerfilRiesgoService {
 
@@ -36,15 +15,7 @@ public class PerfilRiesgoService {
     private static final int UMBRAL_VERDE    = 30;
     private static final int UMBRAL_AMARILLO = 70;
 
-    /**
-     * Consulta SQL con 3 LEFT JOINs.
-     * Los parámetros :puertoOrigen, :idImportador, :codigoArancelario
-     * actúan como claves de cruce contra las tres tablas de catálogo.
-     *
-     * Cuando un parámetro no coincide con ningún registro (NULL o no existe),
-     * el LEFT JOIN devuelve NULL y COALESCE aplica el valor por defecto (0 / false).
-     * El score final se calcula directamente en SQL con expresiones CASE.
-     */
+    
     private static final String SQL_ANALISIS_RIESGO = """
         SELECT
             -- ── VECTOR 1: catalogo_riesgo_pais ──────────────────────────────
@@ -116,7 +87,7 @@ public class PerfilRiesgoService {
         // Preparar parámetros — valores nulos son manejados por el LEFT JOIN
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("puertoOrigen",       orVacio(operacion.getPuertoOrigen()))
-                .addValue("idImportador",        operacion.getIdImportador())  // puede ser null → no coincide
+                .addValue("idImportador",        operacion.getIdImportador()) 
                 .addValue("codigoArancelario",   orVacio(operacion.getCodigoArancelario()));
 
         // Ejecutar la consulta con 4 LEFT JOINs — resultado en una sola fila
