@@ -177,10 +177,27 @@ export class OperacionesComponent implements OnInit {
 
 
 
-  // ── Máquina de estados ──────────────── ───────────────────────────────────
+  // ── Máquina de estados ─────────────────────────────────────────────────────
 
+  /**
+   * Avanza la operación al SIGUIENTE estado de la secuencia del rol actual.
+   *
+   * Antes este método llamaba a `getEstadosRegistro(String)` — que devolvía
+   * la secuencia COMPLETA de estados (un string[]) — y se la pasaba tal
+   * cual a `actualizarEstadoOperacion`, que espera un único string. Eso
+   * hacía que el módulo de operaciones ni siquiera compilara (el argumento
+   * no era asignable al parámetro esperado). Ahora se calcula el estado
+   * actual dentro de la secuencia y se envía solo el siguiente paso.
+   */
   avanzarFlujo(operacion: OperacionAduanera): void {
-    this.aduanaService.actualizarEstadoOperacion(operacion.id!, this.getEstadosRegistro(String)).subscribe({
+    const siguienteEstado = this.obtenerSiguienteEstado(operacion.estado);
+
+    if (!siguienteEstado) {
+      alert(`La operación "${operacion.numeroTracking}" ya se encuentra en el último estado del flujo (${operacion.estado}).`);
+      return;
+    }
+
+    this.aduanaService.actualizarEstadoOperacion(operacion.id!, siguienteEstado).subscribe({
       next: (opActualizada) => {
         // Actualizar estado localmente sin recargar toda la lista
         this.operaciones = this.operaciones.map(op => op.id === opActualizada.id ? opActualizada : op);
@@ -189,8 +206,8 @@ export class OperacionesComponent implements OnInit {
     });
   }
 
-
-  getEstadosRegistro(String: StringConstructor): string[] {
+  /** Secuencia ordenada de estados que el rol actual puede recorrer. */
+  getSecuenciaEstados(): string[] {
     switch (this.rolActual) {
       case 'AGENTE':
         return ['DOCUMENTACION', 'AFORO', 'LIBERADA'];
@@ -202,6 +219,25 @@ export class OperacionesComponent implements OnInit {
       default:
         return [];
     }
+  }
+
+  /**
+   * Calcula el siguiente estado en la secuencia del rol actual a partir del
+   * estado actual de la operación. Devuelve `null` si ya está en el último
+   * paso o si el rol no tiene una secuencia definida.
+   */
+  obtenerSiguienteEstado(estadoActual: string): string | null {
+    const secuencia = this.getSecuenciaEstados();
+    const indiceActual = secuencia.indexOf(estadoActual);
+
+    // Estado actual fuera de la secuencia del rol: se ofrece el primer paso disponible.
+    if (indiceActual === -1) {
+      return secuencia[0] ?? null;
+    }
+    if (indiceActual >= secuencia.length - 1) {
+      return null; // ya está en el último estado
+    }
+    return secuencia[indiceActual + 1];
   }
 
   subirDocumento(operacion: OperacionAduanera): void {

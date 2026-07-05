@@ -1,11 +1,13 @@
 package com.proyecto.backend.controllers;
 
+import com.proyecto.backend.dto.CambioEstadoRequest;
 import com.proyecto.backend.dto.DetalleRiesgoDTO;
 import com.proyecto.backend.dto.OperacionConRiesgoResponse;
-import com.proyecto.backend.dto.EstadisticasDTO;
 import com.proyecto.backend.models.OperacionAduanera;
 import com.proyecto.backend.repositories.OperacionAduaneraRepository;
+import com.proyecto.backend.services.OperacionAduaneraService;
 import com.proyecto.backend.services.PerfilRiesgoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,9 @@ public class OperacionAduaneraController {
     @Autowired
     private PerfilRiesgoService perfilRiesgoService;
 
+    @Autowired
+    private OperacionAduaneraService operacionAduaneraService;
+
     // ── GET todas las operaciones ─────────────────────────────────────────────
     @GetMapping
     public List<OperacionAduanera> obtenerTodas() {
@@ -33,31 +38,14 @@ public class OperacionAduaneraController {
     /**
      * POST /api/operaciones
      *
-     * Flujo completo:
-     *  1. Forzar estado inicial "DOCUMENTACION"
-     *  2. Ejecutar el motor de riesgo: una consulta SQL con 3 LEFT JOINs
-     *     cruzando catalogo_riesgo_pais, importador_historial y restricciones_arancelarias
-     *  3. Si canal = VERDE → estado cambia a "DESADUANIZACION" (flujo automático)
-     *  4. Persistir la operación con canalAforo y puntajeRiesgo
-     *  5. Devolver OperacionConRiesgoResponse con la operación guardada
-     *     Y el desglose completo (qué encontró cada JOIN, cuántos pts sumó)
+     * El controller solo traduce la petición HTTP; toda la orquestación
+     * (fijar estado inicial, ejecutar el motor de riesgo y persistir) vive
+     * en {@link OperacionAduaneraService#registrarOperacion}.
      */
     @PostMapping
     public ResponseEntity<OperacionConRiesgoResponse> crearOperacion(
             @RequestBody OperacionAduanera operacion) {
-
-        // 1. Estado inicial del flujo
-        operacion.setEstado("DOCUMENTACION");
-
-        // 2. Motor de riesgo: SQL JOIN → enriquece 'operacion' (canalAforo, puntajeRiesgo, estado)
-        //    y devuelve el desglose por vector
-        DetalleRiesgoDTO detalle = perfilRiesgoService.evaluarYObtenerDetalle(operacion);
-
-        // 3. Persistir operación ya enriquecida
-        OperacionAduanera guardada = operacionRepository.save(operacion);
-
-        // 4. Respuesta completa: operación + análisis de riesgo
-        return ResponseEntity.ok(new OperacionConRiesgoResponse(guardada, detalle));
+        return ResponseEntity.ok(operacionAduaneraService.registrarOperacion(operacion));
     }
 
     // ── GET por tracking ──────────────────────────────────────────────────────
@@ -69,21 +57,27 @@ public class OperacionAduaneraController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ── PUT avanzar estado ────────────────────────────────────────────────────
+    /**
+     * PUT /api/operaciones/{id}/estado
+     *
+     * Antes recibía un {@code String} JSON crudo (había que limpiar
+     * comillas a mano) y no validaba el valor recibido. Ahora recibe un
+     * DTO explícito ({@link CambioEstadoRequest}) y el servicio valida que
+     * el estado sea uno de los reconocidos por el flujo antes de guardarlo.
+     */
     @PutMapping("/{id}/estado")
-    public ResponseEntity<OperacionAduanera> actualizarEstado(
+    public ResponseEntity<?> actualizarEstado(
             @PathVariable Long id,
-            @RequestBody String nuevoEstado) {
-        return operacionRepository.findById(id)
-                .map(operacion -> {
-                    String estadoLimpio = nuevoEstado.replace("\"", "");
-                    operacion.setEstado(estadoLimpio);
-                    return ResponseEntity.ok(operacionRepository.save(operacion));
-                })
-                .orElse(ResponseEntity.notFound().build());
+            @Valid @RequestBody CambioEstadoRequest request) {
+        try {
+            return operacionAduaneraService.cambiarEstado(id, request.getEstado())
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
     }
 
-    
     @GetMapping("/{id}/analisis")
     public ResponseEntity<OperacionConRiesgoResponse> obtenerAnalisis(@PathVariable Long id) {
         return operacionRepository.findById(id)

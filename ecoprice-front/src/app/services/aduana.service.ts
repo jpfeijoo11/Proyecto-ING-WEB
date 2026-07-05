@@ -118,9 +118,10 @@ export class AduanaService {
     return this.http.post<OperacionConRiesgoResponse>(`${this.baseUrl}/operaciones`, operacion);
   }
 
+  /** Envía el nuevo estado como objeto JSON ({ estado: ... }), acorde al DTO CambioEstadoRequest del backend. */
   actualizarEstadoOperacion(id: number, nuevoEstado: string): Observable<OperacionAduanera> {
     return this.http.put<OperacionAduanera>(
-      `${this.baseUrl}/operaciones/${id}/estado`, `"${nuevoEstado}"`);
+      `${this.baseUrl}/operaciones/${id}/estado`, { estado: nuevoEstado });
   }
 
   getAlertasRojas(): Observable<OperacionAduanera[]> {

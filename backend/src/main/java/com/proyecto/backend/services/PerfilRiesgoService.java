@@ -1,21 +1,47 @@
 package com.proyecto.backend.services;
 
 import com.proyecto.backend.dto.DetalleRiesgoDTO;
+import com.proyecto.backend.events.CanalAforoAsignadoEvent;
 import com.proyecto.backend.models.OperacionAduanera;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
-
+/**
+ * Motor de riesgo aduanero: ejecuta el cruce (JOIN) contra los catálogos de
+ * riesgo y enriquece la operación con su canal de aforo.
+ *
+ * <p>Mejoras aplicadas sobre la versión inicial:</p>
+ * <ul>
+ *   <li><b>SRP</b>: la resolución del canal (umbrales) y su descripción ya
+ *       no viven aquí — se delegan a {@link PoliticaCanalAforo} — y el log
+ *       de la evaluación ya no se escribe directamente en este servicio,
+ *       se delega a un observador vía {@link CanalAforoAsignadoEvent}. Este
+ *       servicio se limita a una responsabilidad: ejecutar el cruce de
+ *       catálogos y calcular el puntaje.</li>
+ *   <li><b>DIP</b>: en vez de invocar métodos privados con reglas fijas o
+ *       instanciar colaboradores concretos, depende de las abstracciones
+ *       {@link PoliticaCanalAforo} y {@link ApplicationEventPublisher},
+ *       inyectadas por constructor.</li>
+ * </ul>
+ */
 @Service
 public class PerfilRiesgoService {
 
-    // ── Umbrales de canal ─────────────────────────────────────────────────────
-    private static final int UMBRAL_VERDE    = 30;
-    private static final int UMBRAL_AMARILLO = 70;
+    private final NamedParameterJdbcTemplate jdbc;
+    private final PoliticaCanalAforo politicaCanalAforo;
+    private final ApplicationEventPublisher eventPublisher;
 
-    
+    public PerfilRiesgoService(NamedParameterJdbcTemplate jdbc,
+                                PoliticaCanalAforo politicaCanalAforo,
+                                ApplicationEventPublisher eventPublisher) {
+        this.jdbc = jdbc;
+        this.politicaCanalAforo = politicaCanalAforo;
+        this.eventPublisher = eventPublisher;
+    }
+
+
     private static final String SQL_ANALISIS_RIESGO = """
         SELECT
             -- ── VECTOR 1: catalogo_riesgo_pais ──────────────────────────────
@@ -71,9 +97,6 @@ public class PerfilRiesgoService {
             ON LOWER(TRIM(lng.ruc_sancionado)) = LOWER(TRIM(COALESCE(ih.ruc_empresa, '')))
         """;
 
-    @Autowired
-    private NamedParameterJdbcTemplate jdbc;
-
     /**
      * Ejecuta el análisis de riesgo mediante JOIN en PostgreSQL,
      * enriquece la operación con canal y puntaje, y devuelve el
@@ -124,10 +147,10 @@ public class PerfilRiesgoService {
             return dto;
         });
 
-        // Asignar canal y descripción según umbrales
-        String canal = resolverCanal(detalle.getPuntajeTotal());
+        // Asignar canal y descripción — delegado a la estrategia inyectada (Strategy / OCP)
+        String canal = politicaCanalAforo.resolverCanal(detalle.getPuntajeTotal());
         detalle.setCanalAforo(canal);
-        detalle.setDescripcionCanal(descripcionCanal(canal));
+        detalle.setDescripcionCanal(politicaCanalAforo.descripcionCanal(canal));
 
         // Enriquecer la entidad que se guardará en BD
         operacion.setPuntajeRiesgo(detalle.getPuntajeTotal());
@@ -138,16 +161,11 @@ public class PerfilRiesgoService {
             operacion.setEstado("DESADUANIZACION");
         }
 
-        // Log técnico para el servidor
-        System.out.printf(
-            "[PERFIL-RIESGO] %s | Origen: %s(%s) +%d | Importador: %s(%d inf.) +%d | " +
-            "Mercancía: %s(perm=%s) +%d | TOTAL: %d pts → %s%n",
-            operacion.getNumeroTracking(),
-            operacion.getPuertoOrigen(), detalle.getNivelRiesgoPais(), detalle.getPuntosOrigen(),
-            detalle.getNombreImportador(), detalle.getInfraccionesImportador(), detalle.getPuntosImportador(),
-            detalle.getDescripcionMercancia(), detalle.isRequierePermiso(), detalle.getPuntosMercancia(),
-            detalle.getPuntajeTotal(), canal
-        );
+        // Publicar evento (Observer): quien quiera reaccionar (logging, alertas
+        // futuras al Inspector, WebSocket, correo) se suscribe a este evento sin
+        // que este servicio necesite conocerlo ni cambiar.
+        eventPublisher.publishEvent(new CanalAforoAsignadoEvent(
+                operacion.getNumeroTracking(), canal, detalle.getPuntajeTotal()));
 
         return detalle;
     }
@@ -191,29 +209,14 @@ public class PerfilRiesgoService {
         // Usar el canal ya almacenado en la operación (el que se calculó al registrar)
         String canal = operacion.getCanalAforo() != null
                 ? operacion.getCanalAforo()
-                : resolverCanal(detalle.getPuntajeTotal());
+                : politicaCanalAforo.resolverCanal(detalle.getPuntajeTotal());
 
         detalle.setCanalAforo(canal);
-        detalle.setDescripcionCanal(descripcionCanal(canal));
+        detalle.setDescripcionCanal(politicaCanalAforo.descripcionCanal(canal));
         return detalle;
     }
 
     // ── Helpers privados ──────────────────────────────────────────────────────
-
-    private String resolverCanal(int score) {
-        if (score <= UMBRAL_VERDE)    return "VERDE";
-        if (score <= UMBRAL_AMARILLO) return "AMARILLO";
-        return "ROJO";
-    }
-
-    private String descripcionCanal(String canal) {
-        return switch (canal) {
-            case "VERDE"    -> "Desaduanización Automática: carga aprobada sin inspección adicional.";
-            case "AMARILLO" -> "Aforo Documental: el Agente debe subir Factura, Certificado de Origen y Póliza de Seguro.";
-            case "ROJO"     -> "Aforo Físico Intrusivo: el Inspector debe abrir el contenedor presencialmente y llenar el reporte de hallazgos.";
-            default         -> "";
-        };
-    }
 
     private String orVacio(String valor) {
         return (valor == null || valor.isBlank()) ? "" : valor.trim();

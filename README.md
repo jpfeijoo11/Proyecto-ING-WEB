@@ -15,7 +15,7 @@ La aplicación permite:
 ## 🧩 Arquitectura
 
 ### Backend
-- Java 17
+- Java 25
 - Spring Boot 4.0.5
 - Spring MVC
 - Spring Data JPA
@@ -111,7 +111,7 @@ La aplicación permite:
 ## ⚙️ Configuración local
 
 ### Prerrequisitos
-- Java 17
+- Java 25
 - Maven o Maven Wrapper
 - Node.js 18+
 - npm
